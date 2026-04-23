@@ -659,7 +659,15 @@
                 container.appendChild(this.element);
             }
 
-            // Обновление позиции
+            // Обновление позиции (отдельный метод для управления мышью)
+            updatePosition() {
+                if (this.element) {
+                    this.element.style.left = this.x + 'px';
+                    this.element.style.top = this.y + 'px';
+                }
+            }
+
+            // Обновление позиции и отскок от стен
             update(containerWidth, containerHeight) {
                 this.x += this.vx;
                 this.y += this.vy;
@@ -709,6 +717,16 @@
                 this.totalPairs = 0;
                 this.totalChildren = 0;
                 this.isPlaying = false;
+                this.isPaused = false;
+                this.mouseControlEnabled = false;
+                this.mouseX = 0;
+                this.mouseY = 0;
+                
+                // Обработчик движения мыши
+                document.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX;
+                    this.mouseY = e.clientY;
+                });
             }
 
             // Старт игры
@@ -759,15 +777,68 @@
 
             // Игровой цикл
             gameLoop() {
-                if (!this.isPlaying) return;
+                if (!this.isPlaying || this.isPaused) {
+                    requestAnimationFrame(() => this.gameLoop());
+                    return;
+                }
 
                 const containerWidth = window.innerWidth;
                 const containerHeight = window.innerHeight;
+
+                // Обновление игрока (мышь или авто)
+                if (this.player) {
+                    if (this.mouseControlEnabled) {
+                        // Режим мыши: плавное движение к курсору
+                        const dx = this.mouseX - (this.player.x + 30);
+                        const dy = this.mouseY - (this.player.y + 30);
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance > 5) {
+                            this.player.x += (dx / distance) * 5;
+                            this.player.y += (dy / distance) * 5;
+                            this.player.updatePosition();
+                        }
+                    } else {
+                        // Автономный режим
+                        this.player.update(containerWidth, containerHeight);
+                    }
+                }
 
                 // Обновление НПС
                 this.npcs.forEach(npc => npc.update(containerWidth, containerHeight));
 
                 requestAnimationFrame(() => this.gameLoop());
+            }
+
+            // Переключение управления мышью
+            toggleMouseControl() {
+                this.mouseControlEnabled = !this.mouseControlEnabled;
+                const btn = document.getElementById('mouse-btn');
+                
+                if (this.mouseControlEnabled) {
+                    btn.textContent = '🖱️ МЫШЬ';
+                    btn.style.background = 'linear-gradient(45deg, #00b894, #00cec9)';
+                } else {
+                    btn.textContent = '🤖 АВТО';
+                    btn.style.background = 'linear-gradient(45deg, #636e72, #b2bec3)';
+                }
+            }
+
+            // Переключение паузы
+            togglePause() {
+                this.isPaused = !this.isPaused;
+                const btn = document.getElementById('pause-btn');
+                const overlay = document.getElementById('pause-overlay');
+                
+                if (this.isPaused) {
+                    btn.textContent = '▶️ Продолжить';
+                    btn.style.background = 'linear-gradient(45deg, #00b894, #00cec9)';
+                    overlay.style.display = 'flex';
+                } else {
+                    btn.textContent = '⏸️ Пауза';
+                    btn.style.background = 'linear-gradient(45deg, #fdcb6e, #f39c12)';
+                    overlay.style.display = 'none';
+                }
             }
 
             // Выбор персонажа для взаимодействия
@@ -918,12 +989,12 @@
                 }, 3000);
             }
 
-            // Переключение на ребенка
-            switchToChild() {
-                if (this.children.length === 0) return;
+            // Переключение на ребенка (можно передать конкретного ребенка)
+            switchToChild(specificChild = null) {
+                if (this.children.length === 0 && !specificChild) return;
 
-                // Выбор случайного ребенка
-                const newPlayer = this.children[Math.floor(Math.random() * this.children.length)];
+                // Выбор ребенка: либо конкретный, либо случайный
+                const newPlayer = specificChild || this.children[Math.floor(Math.random() * this.children.length)];
                 
                 // Удаляем старого игрока
                 this.player.removeVisual();
@@ -978,6 +1049,29 @@
             interact() {
                 if (this.selectedNPC && this.selectedNPC.relationshipCharge >= 100) {
                     this.completeRelationship(this.selectedNPC);
+                }
+            }
+
+            // Перезапуск игры
+            restart() {
+                location.reload();
+            }
+
+            // Переключение на следующего ребенка
+            switchToNextChild() {
+                if (this.children.length === 0) return;
+                
+                // Находим текущего игрока в списке детей
+                const currentIndex = this.children.indexOf(this.player);
+                let nextIndex = (currentIndex + 1) % this.children.length;
+                
+                // Если следующий ребенок - это текущий игрок, берем следующего
+                while (nextIndex !== currentIndex && this.children[nextIndex] === this.player) {
+                    nextIndex = (nextIndex + 1) % this.children.length;
+                }
+                
+                if (this.children[nextIndex] !== this.player) {
+                    this.switchToChild(this.children[nextIndex]);
                 }
             }
         }
