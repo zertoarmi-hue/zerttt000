@@ -3,1101 +3,1056 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌳 Симулятор Родословной</title>
+    <title>Симулятор Рода: Наследие 2.0</title>
     <style>
-        /* ============================================
-           CSS СТИЛИ
-           ============================================ */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-color: #f0f4f8;
+            --panel-bg: #ffffff;
+            --text-color: #2d3748;
+            --accent-color: #4fd1c5;
+            --danger-color: #fc8181;
+            --success-color: #68d391;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         body {
+            margin: 0;
+            padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: var(--bg-color);
+            color: var(--text-color);
             overflow: hidden;
-            height: 100vh;
             user-select: none;
         }
 
-        /* Игровое поле */
+        /* --- Layout --- */
         #game-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            grid-template-rows: 60px 1fr 200px;
+            height: 100vh;
+            width: 100vw;
         }
 
-        /* Верхняя панель (Header) */
-        #header-panel {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            background: rgba(0, 0, 0, 0.7);
+        /* --- Header --- */
+        header {
+            grid-column: 1 / -1;
+            background: var(--panel-bg);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
             padding: 0 20px;
-            z-index: 1000;
-            color: white;
+            box-shadow: var(--shadow);
+            z-index: 10;
         }
 
-        #header-panel h1 {
-            font-size: 1.5em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        .header-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .header-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.2s;
-        }
-
-        .restart-btn {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-            color: white;
-        }
-
-        .restart-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .generation-counter {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 8px 15px;
-            border-radius: 5px;
+        h1 { font-size: 1.5rem; margin: 0; color: #4a5568; }
+        .stats-badge {
+            background: #edf2f7;
+            padding: 5px 12px;
+            border-radius: 20px;
             font-weight: bold;
+            font-size: 0.9rem;
+            margin-left: 10px;
         }
 
-        /* Боковая панель статистики */
-        #stats-panel {
-            position: absolute;
-            top: 60px;
-            left: 10px;
-            background: rgba(255, 255, 255, 0.95);
+        /* --- Sidebars --- */
+        aside {
+            background: var(--panel-bg);
             padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            z-index: 100;
-            min-width: 280px;
-            max-height: calc(100vh - 200px);
             overflow-y: auto;
+            border-right: 1px solid #e2e8f0;
+        }
+        aside.right {
+            border-right: none;
+            border-left: 1px solid #e2e8f0;
         }
 
-        #stats-panel h3 {
-            margin-bottom: 10px;
-            color: #333;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 5px;
-            font-size: 1.1em;
-        }
-
-        .stat-section {
-            margin-bottom: 15px;
-        }
-
-        .stat-section h4 {
-            color: #667eea;
-            font-size: 0.95em;
-            margin-bottom: 8px;
-        }
-
-        .stat-row {
-            margin: 5px 0;
-            font-size: 14px;
-            color: #555;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .stat-label {
-            font-weight: bold;
-            color: #333;
-        }
-
-        .stat-value {
-            color: #667eea;
-            font-weight: 600;
-        }
-
-        /* Шкала заряда в панели */
-        .charge-container {
-            margin-top: 10px;
-        }
-
-        .charge-label {
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .charge-bar-bg {
-            width: 100%;
-            height: 15px;
-            background: #e0e0e0;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .charge-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #48dbfb);
-            width: 0%;
-            transition: width 0.3s ease;
-            border-radius: 8px;
-        }
-
-        /* Панель управления */
-        #controls-panel {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 12px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            z-index: 100;
-            display: flex;
-            gap: 10px;
-        }
-
-        .control-btn {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-weight: 600;
-        }
-
-        .mouse-btn {
-            background: #95a5a6;
-            color: white;
-        }
-
-        .mouse-btn.active {
-            background: linear-gradient(45deg, #11998e, #38ef7d);
-            box-shadow: 0 0 10px rgba(56, 239, 125, 0.5);
-        }
-
-        .pause-btn {
-            background: linear-gradient(45deg, #f093fb, #f5576c);
-            color: white;
-        }
-
-        .pause-btn.paused {
-            background: linear-gradient(45deg, #f5af19, #f12711);
-        }
-
-        .next-gen-btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-        }
-
-        .control-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .control-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Экран старта */
-        #start-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-
-        #start-screen h1 {
-            color: white;
-            font-size: 3em;
+        .panel-section {
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid #e2e8f0;
+        }
+        .panel-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #718096;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
         }
 
-        #start-screen p {
-            color: #ddd;
-            font-size: 1.3em;
-            margin-bottom: 30px;
+        /* --- Game Area --- */
+        #game-area {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+            position: relative;
+            background: #fff;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+            overflow: hidden;
+            cursor: crosshair;
         }
 
-        .gender-btn {
-            padding: 20px 40px;
-            font-size: 1.5em;
-            margin: 10px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+        /* --- Log Panel --- */
+        #log-panel {
+            grid-column: 2 / 3;
+            grid-row: 3 / 4;
+            background: #2d3748;
+            color: #cbd5e0;
+            padding: 10px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            overflow-y: auto;
+            border-top: 4px solid #4a5568;
         }
+        .log-entry { margin-bottom: 4px; }
+        .log-good { color: var(--success-color); }
+        .log-bad { color: var(--danger-color); }
+        .log-info { color: #90cdf4; }
 
-        .gender-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
-        }
-
-        .boy-btn {
-            background: linear-gradient(45deg, #4facfe, #00f2fe);
-            color: white;
-        }
-
-        .girl-btn {
-            background: linear-gradient(45deg, #ff9a9e, #fecfef);
-            color: white;
-        }
-
-        /* Персонаж */
+        /* --- Characters --- */
         .character {
             position: absolute;
             width: 60px;
             height: 60px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 32px;
+            transform: translate(-50%, -50%);
+            transition: top 0.1s linear, left 0.1s linear;
             cursor: pointer;
-            transition: transform 0.1s;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            border: 3px solid white;
-            z-index: 50;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .character:hover {
-            transform: scale(1.15);
-            z-index: 51;
-        }
-
-        .character.player {
-            border: 4px solid gold;
-            box-shadow: 0 0 20px gold, 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Индикатор над персонажем */
-        .character-indicator {
-            position: absolute;
-            top: -35px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.9);
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            white-space: nowrap;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            pointer-events: none;
+        .char-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #ddd;
             display: flex;
             align-items: center;
-            gap: 4px;
-        }
-
-        /* Шкала заряда отношений */
-        .relationship-bar {
-            position: absolute;
-            bottom: -18px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 70px;
-            height: 6px;
-            background: #333;
-            border-radius: 3px;
+            justify-content: center;
+            font-size: 30px;
+            border: 3px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: relative;
             overflow: hidden;
-            display: none;
+        }
+        
+        .char-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
+        .char-info {
+            background: rgba(255,255,255,0.9);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-top: -5px;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .relationship-bar {
+            width: 40px;
+            height: 4px;
+            background: #eee;
+            border-radius: 2px;
+            margin-top: 2px;
+            overflow: hidden;
+        }
         .relationship-fill {
             height: 100%;
-            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb);
+            background: #ed64a6;
             width: 0%;
-            transition: width 0.2s;
+            transition: width 0.3s;
         }
 
-        .character.interacting .relationship-bar {
-            display: block;
-        }
-
-        /* Инфо о персонаже при клике */
-        #character-info {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.98);
-            padding: 18px;
-            border-radius: 12px;
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
-            z-index: 200;
-            display: none;
-            min-width: 220px;
-            border: 2px solid #667eea;
-        }
-
-        #character-info h4 {
-            margin-bottom: 12px;
-            color: #333;
-            font-size: 1.1em;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 8px;
-        }
-
-        #character-info p {
-            margin: 6px 0;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .action-btn {
-            margin-top: 12px;
-            padding: 10px 18px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 1em;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .action-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .action-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* Уведомления */
-        .notification {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.92);
-            color: white;
-            padding: 35px 60px;
-            border-radius: 20px;
-            font-size: 1.6em;
-            z-index: 1500;
-            display: none;
-            text-align: center;
-            animation: fadeInOut 3s forwards;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
-            20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
-        }
-
-        /* Кнопка смены поколения */
-        #generation-btn {
-            position: absolute;
-            bottom: 80px;
-            right: 20px;
-            padding: 18px 35px;
-            background: linear-gradient(45deg, #11998e, #38ef7d);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.2em;
-            cursor: pointer;
-            z-index: 100;
-            display: none;
-            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        #generation-btn:hover {
-            transform: scale(1.08);
-            box-shadow: 0 8px 30px rgba(17, 153, 142, 0.6);
-        }
-
-        /* Эффекты анимации */
-        @keyframes heartFloat {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
-        }
-
-        .heart-effect {
+        /* --- Floating Emojis --- */
+        .floating-emoji {
             position: absolute;
             font-size: 24px;
             pointer-events: none;
-            z-index: 1000;
-            animation: heartFloat 1.5s ease-out forwards;
+            animation: floatUp 1.5s ease-out forwards;
+            z-index: 20;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        @keyframes confettiFall {
-            0% { opacity: 1; transform: translateY(0) rotate(0deg); }
-            100% { opacity: 0; transform: translateY(200px) rotate(720deg); }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
         }
 
-        .confetti {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            pointer-events: none;
-            z-index: 1000;
-            animation: confettiFall 2s ease-out forwards;
-        }
-
-        /* Оверлей паузы */
-        #pause-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1800;
-        }
-
-        #pause-overlay span {
+        /* --- Controls & Buttons --- */
+        button {
+            background: var(--accent-color);
             color: white;
-            font-size: 3em;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
             font-weight: bold;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+            transition: filter 0.2s;
+            font-size: 0.9rem;
+        }
+        button:hover { filter: brightness(1.1); }
+        button:active { transform: scale(0.98); }
+        button.danger { background: var(--danger-color); }
+        button.secondary { background: #718096; }
+        
+        .control-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .control-row button { flex: 1; }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .stat-val { font-weight: bold; }
+
+        /* --- Overlays --- */
+        #start-screen, #pause-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            color: white;
+        }
+        #pause-overlay { display: none; backdrop-filter: blur(5px); }
+        
+        .modal-content {
+            background: white;
+            color: #2d3748;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 400px;
+        }
+        .modal-content h2 { margin-top: 0; }
+        .gender-select {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .gender-btn {
+            font-size: 3rem;
+            padding: 20px;
+            background: #edf2f7;
+            border: 2px solid transparent;
+        }
+        .gender-btn:hover {
+            background: #e2e8f0;
+            border-color: var(--accent-color);
+        }
+
+        /* Editor Styles */
+        .editor-input {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .asset-preview {
+            width: 50px;
+            height: 50px;
+            border: 1px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px 0;
+            font-size: 24px;
+        }
+        .asset-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Progress Bar Global */
+        .progress-container {
+            width: 100%;
+            background: #edf2f7;
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: var(--success-color);
+            width: 0%;
+            transition: width 0.5s;
         }
     </style>
 </head>
 <body>
-    <!-- ============================================
-         HTML СТРУКТУРА
-         ============================================ -->
-    
-    <div id="game-container">
-        <!-- Верхняя панель (Header) -->
-        <div id="header-panel">
-            <h1>🌳 Симулятор Родословной</h1>
-            <div class="header-controls">
-                <div class="generation-counter">Поколение: <span id="header-generation">1</span></div>
-                <button class="header-btn restart-btn" onclick="game.restart()">🔄 Начать заново</button>
-            </div>
+
+<!-- Start Screen -->
+<div id="start-screen">
+    <div class="modal-content">
+        <h2>🌳 Симулятор Рода</h2>
+        <p>Создайте династию. Найдите пару. Оставьте наследие.</p>
+        <div class="gender-select">
+            <button class="gender-btn" onclick="game.start('male')">👦<br><span style="font-size:1rem">Мальчик</span></button>
+            <button class="gender-btn" onclick="game.start('female')">👧<br><span style="font-size:1rem">Девочка</span></button>
         </div>
+        <p style="font-size: 0.8rem; color: #718096;">Управление: Клик по персонажу для общения.<br>Следите за возрастом!</p>
+    </div>
+</div>
 
-        <!-- Экран выбора пола -->
-        <div id="start-screen">
-            <h1>🌳 Симулятор Родословной</h1>
-            <p>Выберите пол вашего первого персонажа:</p>
-            <button class="gender-btn boy-btn" onclick="game.start('male')">👦 Мальчик</button>
-            <button class="gender-btn girl-btn" onclick="game.start('female')">👧 Девочка</button>
+<!-- Pause Overlay -->
+<div id="pause-overlay">
+    <div class="modal-content">
+        <h2>⏸️ Пауза</h2>
+        <button onclick="game.togglePause()">Продолжить</button>
+        <br><br>
+        <button class="secondary" onclick="game.toggleSpeed()">Скорость: <span id="speed-display">1x</span></button>
+    </div>
+</div>
+
+<div id="game-container">
+    <!-- Header -->
+    <header>
+        <div style="display:flex; align-items:center;">
+            <h1>🌳 Родословная</h1>
+            <span class="stats-badge">Поколение: <span id="gen-count">1</span></span>
+            <span class="stats-badge">Год: <span id="year-count">1</span></span>
         </div>
+        <div>
+            <button class="secondary" onclick="ui.toggleEditor()">🎨 Редактор</button>
+            <button class="danger" onclick="game.restart()">🔄 Заново</button>
+        </div>
+    </header>
 
-        <!-- Боковая панель статистики -->
-        <div id="stats-panel">
-            <h3>📊 Статистика</h3>
-            
-            <div class="stat-section">
-                <h4>👤 Текущий персонаж</h4>
-                <div class="stat-row"><span class="stat-label">Пол:</span> <span id="stat-character" class="stat-value">-</span></div>
-                <div class="stat-row"><span class="stat-label">Цвет:</span> <span id="stat-color" class="stat-value">-</span></div>
-                <div class="stat-row"><span class="stat-label">Интерес:</span> <span id="stat-interest" class="stat-value">-</span></div>
-                <div class="stat-row"><span class="stat-label">Поколение:</span> <span id="stat-generation" class="stat-value">1</span></div>
-            </div>
-
-            <div class="stat-section">
-                <h4>❤️ Отношения</h4>
-                <div class="stat-row"><span class="stat-label">Партнёр:</span> <span id="stat-partner" class="stat-value">-</span></div>
-                <div class="charge-container">
-                    <div class="charge-label">
-                        <span>Заряд отношений</span>
-                        <span id="stat-charge-percent">0%</span>
-                    </div>
-                    <div class="charge-bar-bg">
-                        <div class="charge-bar-fill" id="stat-charge-bar"></div>
-                    </div>
+    <!-- Left Sidebar: Stats -->
+    <aside>
+        <div class="panel-section">
+            <div class="panel-title">Текущий Герой</div>
+            <div id="hero-name" class="stat-val" style="font-size: 1.2rem; margin-bottom: 10px;">-</div>
+            <div class="stat-row"><span>Пол:</span> <span id="hero-gender" class="stat-val">-</span></div>
+            <div class="stat-row"><span>Возраст:</span> <span id="hero-age" class="stat-val">0</span></div>
+            <div class="stat-row"><span>Цвет:</span> <span id="hero-color" class="stat-val">-</span></div>
+            <div class="stat-row"><span>Интерес:</span> <span id="hero-interest" class="stat-val">-</span></div>
+            <div style="margin-top:10px;">
+                <div style="font-size:0.8rem; margin-bottom:2px;">Здоровье / Жизнь</div>
+                <div class="progress-container">
+                    <div id="hero-life-bar" class="progress-bar" style="background: #fc8181; width: 100%;"></div>
                 </div>
             </div>
+        </div>
 
-            <div class="stat-section">
-                <h4>👨‍👩‍👧‍👦 Семья</h4>
-                <div class="stat-row"><span class="stat-label">Всего пар:</span> <span id="stat-pairs" class="stat-value">0</span></div>
-                <div class="stat-row"><span class="stat-label">Потомков:</span> <span id="stat-children" class="stat-value">0</span></div>
+        <div class="panel-section">
+            <div class="panel-title">Цель</div>
+            <div style="font-size: 0.9rem;">Найдите пару и продолжите род до 3-го поколения.</div>
+            <div style="margin-top:10px; font-size: 0.8rem; color: #718096;">
+                💡 Совет: Ищите совпадения интересов!<br>
+                ⚠️ Остерегайтесь старости.
+            </div>
+        </div>
+        
+        <div class="panel-section">
+            <div class="panel-title">Статистика Рода</div>
+            <div class="stat-row"><span>Всего рождено:</span> <span id="total-born" class="stat-val">0</span></div>
+            <div class="stat-row"><span>Успешных пар:</span> <span id="total-couples" class="stat-val">0</span></div>
+        </div>
+    </aside>
+
+    <!-- Game Area -->
+    <div id="game-area"></div>
+
+    <!-- Right Sidebar: Controls & Target -->
+    <aside class="right">
+        <div class="panel-section">
+            <div class="panel-title">Управление</div>
+            <div class="control-row">
+                <button id="btn-mouse-mode" onclick="game.toggleMouseControl()">🖱️ АВТО</button>
+                <button onclick="game.togglePause()">⏸️</button>
+            </div>
+            <div class="control-row">
+                <button class="secondary" onclick="game.switchToNextChild()">➡️ Наследник</button>
             </div>
         </div>
 
-        <!-- Панель управления -->
-        <div id="controls-panel">
-            <button class="control-btn mouse-btn" id="mouse-btn" onclick="game.toggleMouseControl()">
-                🖱️ <span id="mouse-text">АВТО</span>
-            </button>
-            <button class="control-btn pause-btn" id="pause-btn" onclick="game.togglePause()">
-                ⏸️ Пауза
-            </button>
-            <button class="control-btn next-gen-btn" id="next-child-btn" onclick="game.switchToNextChild()" disabled>
-                ➡️ След. ребёнок
-            </button>
+        <div class="panel-section" id="target-panel" style="opacity: 0.5; pointer-events: none;">
+            <div class="panel-title">Общение с:</div>
+            <div id="target-name" style="font-weight:bold; margin-bottom:5px;">-</div>
+            <div class="stat-row"><span>Интерес:</span> <span id="target-interest">-</span></div>
+            
+            <div style="margin-top: 10px;">
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                    <span>Отношения</span>
+                    <span id="rel-percent">0%</span>
+                </div>
+                <div class="progress-container">
+                    <div id="rel-bar" class="progress-bar" style="width: 0%;"></div>
+                </div>
+                <div id="rel-status" style="font-size: 0.7rem; text-align: center; margin-top: 4px; color: #718096;">Ожидание...</div>
+            </div>
         </div>
 
-        <!-- Инфо о персонаже при клике -->
-        <div id="character-info">
-            <h4 id="info-name">Персонаж</h4>
-            <p><span class="stat-label">Цвет:</span> <span id="info-color">-</span></p>
-            <p><span class="stat-label">Интерес:</span> <span id="info-interest">-</span></p>
-            <p><span class="stat-label">Поколение:</span> <span id="info-generation">1</span></p>
-            <p><span class="stat-label">Заряд:</span> <span id="info-charge">0%</span></p>
-            <button class="action-btn" id="interact-btn" onclick="game.interact()">💬 Начать общение</button>
+        <div class="panel-section">
+            <div class="panel-title">Активные эффекты</div>
+            <div id="active-effects" style="font-size: 0.8rem; color: #718096;">Нет</div>
         </div>
+    </aside>
 
-        <!-- Кнопка смены поколения -->
-        <button id="generation-btn" onclick="game.switchToChild()">👶 Продолжить за ребёнка</button>
+    <!-- Bottom Log -->
+    <div id="log-panel"></div>
+</div>
 
-        <!-- Оверлей паузы -->
-        <div id="pause-overlay">
-            <span>⏸️ ПАУЗА</span>
-        </div>
+<script>
+/**
+ * КОНФИГУРАЦИЯ ИГРЫ
+ */
+const CONFIG = {
+    USE_IMAGES: false, // Загрузка картинок вместо эмодзи
+    NPC_COUNT: 8,
+    MAX_AGE: 80, // Максимальный возраст жизни
+    CHILD_AGE: 0,
+    ADULT_AGE: 18, // Возраст совершеннолетия
+    GAME_SPEED_BASE: 1,
+    COLORS: [
+        { name: 'Красный', code: '#fc8181', emoji: '🔴' },
+        { name: 'Синий', code: '#63b3ed', emoji: '🔵' },
+        { name: 'Зеленый', code: '#68d391', emoji: '🟢' }
+    ],
+    INTERESTS: [
+        { name: 'Спорт', emoji: '⚽' },
+        { name: 'Музыка', emoji: '🎵' },
+        { name: 'Наука', emoji: '🔬' }
+    ],
+    NAMES_MALE: ['Алекс', 'Борис', 'Виктор', 'Глеб', 'Дмитрий', 'Егор', 'Жора', 'Иван'],
+    NAMES_FEMALE: ['Анна', 'Белла', 'Вика', 'Галина', 'Даша', 'Ева', 'Женя', 'Инна']
+};
 
-        <!-- Контейнер для персонажей -->
-        <div id="characters-container"></div>
-    </div>
+// Глобальные переменные для загрузки ассетов
+let customAssets = {
+    male: null,
+    female: null,
+    child: null
+};
 
-    <script>
-        /* ============================================
-           JAVASCRIPT ЛОГИКА ИГРЫ
-           ============================================ */
+/**
+ * КЛАСС ПЕРСОНАЖА
+ */
+class Character {
+    constructor(x, y, gender, age = 0, traits = null) {
+        this.id = Math.random().toString(36).substr(2, 9);
+        this.x = x;
+        this.y = y;
+        this.gender = gender; // 'male' or 'female'
+        this.age = age;
+        this.isDead = false;
+        
+        // Характеристики
+        if (traits) {
+            this.color = traits.color;
+            this.interest = traits.interest;
+        } else {
+            this.color = CONFIG.COLORS[Math.floor(Math.random() * CONFIG.COLORS.length)];
+            this.interest = CONFIG.INTERESTS[Math.floor(Math.random() * CONFIG.INTERESTS.length)];
+        }
+        
+        this.name = this.generateName();
+        
+        // Движение
+        this.vx = (Math.random() - 0.5) * 2;
+        this.vy = (Math.random() - 0.5) * 2;
+        this.speed = 1 + Math.random();
+        
+        // Отношения
+        this.relationships = {}; // Map ID -> score (0-100)
+        this.currentPartnerId = null;
+        
+        // DOM элемент
+        this.element = this.createDOM();
+        game.area.appendChild(this.element);
+    }
 
-        // Константы игры
-        const COLORS = {
-            red: { name: 'Красный', hex: '#ff6b6b' },
-            blue: { name: 'Синий', hex: '#4facfe' },
-            green: { name: 'Зеленый', hex: '#48dbfb' }
+    generateName() {
+        const list = this.gender === 'male' ? CONFIG.NAMES_MALE : CONFIG.NAMES_FEMALE;
+        return list[Math.floor(Math.random() * list.length)] + ' ' + String.fromCharCode(65 + Math.floor(Math.random() * 26)) + '.';
+    }
+
+    createDOM() {
+        const el = document.createElement('div');
+        el.className = 'character';
+        el.onclick = (e) => {
+            e.stopPropagation();
+            game.handleCharacterClick(this);
         };
 
-        const INTERESTS = ['Спорт', 'Музыка', 'Наука'];
-
-        const EMOJIS = {
-            male: '👦',
-            female: '👧',
-            child_male: '👶',
-            child_female: '👶'
-        };
-
-        // Класс Персонажа
-        class Character {
-            constructor(gender, color, interest, x, y, isPlayer = false, parents = null) {
-                this.id = Date.now() + Math.random();
-                this.gender = gender; // 'male' или 'female'
-                this.color = color; // 'red', 'blue', 'green'
-                this.interest = interest; // 'Спорт', 'Музыка', 'Наука'
-                this.x = x;
-                this.y = y;
-                this.vx = (Math.random() - 0.5) * 2; // Скорость по X
-                this.vy = (Math.random() - 0.5) * 2; // Скорость по Y
-                this.isPlayer = isPlayer;
-                this.parents = parents; // {mother, father}
-                this.relationshipCharge = 0; // 0-100
-                this.element = null;
-                this.generation = parents ? Math.max(parents.mother.generation, parents.father.generation) + 1 : 1;
+        // Аватар
+        const avatar = document.createElement('div');
+        avatar.className = 'char-avatar';
+        avatar.style.borderColor = this.color.code;
+        
+        if (CONFIG.USE_IMAGES) {
+            const img = document.createElement('img');
+            // Логика выбора картинки в зависимости от возраста и пола
+            let src = '';
+            if (this.age < CONFIG.ADULT_AGE) {
+                src = customAssets.child || (this.gender === 'male' ? '👦' : '👧');
+            } else {
+                src = (this.gender === 'male' ? customAssets.male : customAssets.female) || (this.gender === 'male' ? '👨' : '👩');
             }
-
-            // Создание визуального элемента
-            createVisual(container) {
-                this.element = document.createElement('div');
-                this.element.className = `character ${this.isPlayer ? 'player' : ''}`;
-                this.element.innerHTML = this.isPlayer ? EMOJIS[this.gender] : EMOJIS[this.gender];
-                this.element.style.backgroundColor = COLORS[this.color].hex;
-                this.element.style.left = this.x + 'px';
-                this.element.style.top = this.y + 'px';
-
-                // Шкала отношений
-                const bar = document.createElement('div');
-                bar.className = 'relationship-bar';
-                const fill = document.createElement('div');
-                fill.className = 'relationship-fill';
-                bar.appendChild(fill);
-                this.element.appendChild(bar);
-
-                // Обработчик клика
-                this.element.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (!this.isPlayer) {
-                        game.selectCharacter(this);
-                    }
-                });
-
-                container.appendChild(this.element);
+            
+            if (src.startsWith('http') || src.startsWith('data:image')) {
+                img.src = src;
+            } else {
+                // Если это эмодзи или путь не картинка
+                avatar.textContent = src;
+                img.style.display = 'none';
             }
+            if (img.src) avatar.appendChild(img);
+        } else {
+            // Эмодзи по умолчанию
+            let emoji = '🧍';
+            if (this.age < CONFIG.ADULT_AGE) emoji = this.gender === 'male' ? '👦' : '👧';
+            else emoji = this.gender === 'male' ? '👨' : '👩';
+            avatar.textContent = emoji;
+        }
 
-            // Обновление позиции (отдельный метод для управления мышью)
-            updatePosition() {
-                if (this.element) {
-                    this.element.style.left = this.x + 'px';
-                    this.element.style.top = this.y + 'px';
-                }
+        // Инфо
+        const info = document.createElement('div');
+        info.className = 'char-info';
+        info.innerHTML = `
+            <div>${this.interest.emoji} ${this.age}л</div>
+            <div class="relationship-bar"><div class="relationship-fill" id="rel-${this.id}"></div></div>
+        `;
+
+        el.appendChild(avatar);
+        el.appendChild(info);
+        return el;
+    }
+
+    update() {
+        if (this.isDead) return;
+
+        // Старение (замедленное)
+        if (Math.random() < 0.005) { // Шанс постареть каждый кадр
+            this.age += 1;
+            this.checkLife();
+            ui.updateHeroStats(); // Обновить полоску жизни
+        }
+
+        // Движение
+        if (this === game.player && game.mouseControlEnabled) {
+            // Следование за мышью
+            const dx = game.mouseX - this.x;
+            const dy = game.mouseY - this.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > 5) {
+                this.x += (dx / dist) * this.speed * 1.5;
+                this.y += (dy / dist) * this.speed * 1.5;
             }
+        } else {
+            // Автономное движение
+            this.x += this.vx * this.speed;
+            this.y += this.vy * this.speed;
 
-            // Обновление позиции и отскок от стен
-            update(containerWidth, containerHeight) {
-                this.x += this.vx;
-                this.y += this.vy;
+            // Отскок от стен
+            if (this.x < 30 || this.x > game.area.offsetWidth - 30) this.vx *= -1;
+            if (this.y < 30 || this.y > game.area.offsetHeight - 30) this.vy *= -1;
+            
+            // Ограничение координат
+            this.x = Math.max(30, Math.min(game.area.offsetWidth - 30, this.x));
+            this.y = Math.max(30, Math.min(game.area.offsetHeight - 30, this.y));
+        }
 
-                // Отскок от стен
-                if (this.x <= 0 || this.x >= containerWidth - 60) {
-                    this.vx *= -1;
-                    this.x = Math.max(0, Math.min(this.x, containerWidth - 60));
-                }
-                if (this.y <= 0 || this.y >= containerHeight - 60) {
-                    this.vy *= -1;
-                    this.y = Math.max(0, Math.min(this.y, containerHeight - 60));
-                }
+        // Отрисовка
+        this.element.style.left = `${this.x}px`;
+        this.element.style.top = `${this.y}px`;
+        
+        // Обновление полоски отношений над головой (если есть активный партнер)
+        if (this.currentPartnerId) {
+            const score = this.relationships[this.currentPartnerId] || 0;
+            const bar = document.getElementById(`rel-${this.id}`);
+            if (bar) bar.style.width = `${score}%`;
+        }
+    }
 
-                if (this.element) {
-                    this.element.style.left = this.x + 'px';
-                    this.element.style.top = this.y + 'px';
-                }
-            }
+    checkLife() {
+        if (this.age >= CONFIG.MAX_AGE) {
+            this.die();
+        }
+    }
 
-            // Обновление шкалы отношений
-            updateRelationshipBar() {
-                if (this.element) {
-                    const fill = this.element.querySelector('.relationship-fill');
-                    fill.style.width = this.relationshipCharge + '%';
-                }
-            }
+    die() {
+        this.isDead = true;
+        this.element.style.opacity = '0.3';
+        this.element.style.filter = 'grayscale(100%)';
+        game.log(`${this.name} умер в возрасте ${this.age} лет.`, 'bad');
+        
+        if (this === game.player) {
+            setTimeout(() => game.nextGeneration(), 2000);
+        }
+    }
 
-            // Удаление визуального элемента
-            removeVisual() {
-                if (this.element && this.element.parentNode) {
-                    this.element.parentNode.removeChild(this.element);
-                }
+    getRelationWith(otherId) {
+        return this.relationships[otherId] || 0;
+    }
+
+    addRelation(otherId, amount) {
+        if (!this.relationships[otherId]) this.relationships[otherId] = 0;
+        this.relationships[otherId] = Math.min(100, Math.max(0, this.relationships[otherId] + amount));
+        
+        // Визуальный эффект
+        const bar = document.getElementById(`rel-${this.id}`);
+        if (bar) bar.style.width = `${this.relationships[otherId]}%`;
+        
+        return this.relationships[otherId];
+    }
+}
+
+/**
+ * ОСНОВНОЙ КЛАСС ИГРЫ
+ */
+class Game {
+    constructor() {
+        this.area = document.getElementById('game-area');
+        this.characters = [];
+        this.player = null;
+        this.target = null; // Текущий объект общения
+        this.isRunning = false;
+        this.isPaused = false;
+        this.gameSpeed = 1;
+        this.mouseControlEnabled = false;
+        this.mouseX = 0;
+        this.mouseY = 0;
+        
+        this.generation = 1;
+        this.year = 1;
+        this.stats = { born: 0, couples: 0 };
+        
+        this.lastTime = 0;
+        
+        // Привязка мыши
+        this.area.addEventListener('mousemove', (e) => {
+            const rect = this.area.getBoundingClientRect();
+            this.mouseX = e.clientX - rect.left;
+            this.mouseY = e.clientY - rect.top;
+        });
+
+        this.loop = this.loop.bind(this);
+    }
+
+    start(gender) {
+        document.getElementById('start-screen').style.display = 'none';
+        this.characters = [];
+        this.stats = { born: 0, couples: 0 };
+        this.generation = 1;
+        this.year = 1;
+        
+        // Создание игрока
+        this.player = new Character(
+            this.area.offsetWidth / 2, 
+            this.area.offsetHeight / 2, 
+            gender, 
+            CONFIG.ADULT_AGE + 5
+        );
+        this.characters.push(this.player);
+        
+        // Создание НПС
+        this.spawnNPCs(CONFIG.NPC_COUNT, gender);
+        
+        this.isRunning = true;
+        this.isPaused = false;
+        ui.updateAll();
+        this.log(`Игра началась! Вы - ${this.player.name}.`, 'info');
+        
+        requestAnimationFrame(this.loop);
+    }
+
+    spawnNPCs(count, playerGender) {
+        const oppositeGender = playerGender === 'male' ? 'female' : 'male';
+        for (let i = 0; i < count; i++) {
+            const x = Math.random() * (this.area.offsetWidth - 60) + 30;
+            const y = Math.random() * (this.area.offsetHeight - 60) + 30;
+            // Разброс возрастов: некоторые дети, некоторые взрослые
+            const age = Math.random() > 0.3 ? CONFIG.ADULT_AGE + Math.floor(Math.random() * 40) : Math.floor(Math.random() * 10);
+            const npc = new Character(x, y, oppositeGender, age);
+            this.characters.push(npc);
+        }
+    }
+
+    spawnChild(parent1, parent2) {
+        const x = (parent1.x + parent2.x) / 2;
+        const y = (parent1.y + parent2.y) / 2;
+        
+        // Генетика
+        const newColor = Math.random() > 0.5 ? parent1.color : parent2.color;
+        // Шанс мутации интереса
+        let newInterest = Math.random() > 0.8 ? 
+            CONFIG.INTERESTS[Math.floor(Math.random() * CONFIG.INTERESTS.length)] : 
+            (Math.random() > 0.5 ? parent1.interest : parent2.interest);
+            
+        const childGender = Math.random() > 0.5 ? 'male' : 'female';
+        
+        const child = new Character(x, y, childGender, 0, { color: newColor, interest: newInterest });
+        this.characters.push(child);
+        
+        this.stats.born++;
+        this.log(`❤️ У ${parent1.name} и ${parent2.name} родился ребенок: ${child.name}!`, 'good');
+        ui.spawnConfetti(x, y);
+        ui.updateAll();
+    }
+
+    handleCharacterClick(clickedChar) {
+        if (this.isPaused || !this.isRunning) return;
+        if (clickedChar === this.player) return;
+        if (clickedChar.isDead) return;
+
+        // Логика общения
+        if (this.target === clickedChar) {
+            // Уже общаемся, отмена
+            this.stopInteraction();
+            return;
+        }
+
+        // Начало общения
+        this.startInteraction(clickedChar);
+    }
+
+    startInteraction(targetChar) {
+        this.target = targetChar;
+        this.player.currentPartnerId = targetChar.id;
+        targetChar.currentPartnerId = this.player.id;
+        
+        ui.updateTargetPanel(targetChar);
+        this.log(`Вы начали общаться с ${targetChar.name}.`, 'info');
+    }
+
+    stopInteraction() {
+        if (this.target) {
+            this.player.currentPartnerId = null;
+            this.target.currentPartnerId = null;
+            this.target = null;
+            ui.clearTargetPanel();
+        }
+    }
+
+    processInteraction() {
+        if (!this.target || this.target.isDead || this.player.isDead) {
+            this.stopInteraction();
+            return;
+        }
+
+        const relation = this.player.getRelationWith(this.target.id);
+        
+        // Проверка возраста (нельзя строить отношения с детьми)
+        if (this.player.age < CONFIG.ADULT_AGE || this.target.age < CONFIG.ADULT_AGE) {
+            if (Math.random() < 0.05) this.log("Мы еще слишком малы для этого!", 'info');
+            return;
+        }
+
+        // Механика роста отношений
+        let change = 0;
+        let emoji = '';
+        
+        const matchInterest = this.player.interest.name === this.target.interest.name;
+        
+        if (matchInterest) {
+            change = 1.5; // Быстрый рост
+            emoji = '❤️';
+            if (Math.random() < 0.1) ui.spawnFloatingEmoji(this.target.x, this.target.y, '💕');
+        } else {
+            // Разные интересы
+            if (Math.random() < 0.3) {
+                change = -0.5; // Шанс падения
+                emoji = '❓';
+                ui.spawnFloatingEmoji(this.target.x, this.target.y, '❓');
+            } else {
+                change = 0.2; // Медленный рост
+                emoji = '💬';
             }
         }
 
-        // Основной класс игры
-        class Game {
-            constructor() {
-                this.container = document.getElementById('characters-container');
-                this.player = null;
-                this.npcs = [];
-                this.children = [];
-                this.selectedNPC = null;
-                this.interactionInterval = null;
-                this.generation = 1;
-                this.totalPairs = 0;
-                this.totalChildren = 0;
-                this.isPlaying = false;
-                this.isPaused = false;
-                this.mouseControlEnabled = false;
-                this.mouseX = 0;
-                this.mouseY = 0;
+        const newRel = this.player.addRelation(this.target.id, change);
+        ui.updateRelBar(newRel);
+
+        // Проверка на успех (100%)
+        if (newRel >= 100) {
+            this.successInteraction();
+        }
+        
+        ui.updateRelStatus(matchInterest ? "Отличная совместимость!" : "Сложно найти общий язык...");
+    }
+
+    successInteraction() {
+        this.log(`✨ ${this.player.name} и ${this.target.name} полюбили друг друга!`, 'good');
+        ui.spawnFloatingEmoji(this.target.x, this.target.y, '💍');
+        this.stats.couples++;
+        
+        // Рождение ребенка через небольшую задержку
+        setTimeout(() => {
+            if (!this.player.isDead && !this.target.isDead) {
+                this.spawnChild(this.player, this.target);
+            }
+        }, 1000);
+        
+        this.stopInteraction();
+    }
+
+    nextGeneration() {
+        // Поиск наследника (самый старый живой ребенок игрока или просто любой молодой)
+        // Упрощенно: выбираем любого живого взрослого того же пола, что был игрок, или случайного
+        const candidates = this.characters.filter(c => c !== this.player && !c.isDead && c.age >= CONFIG.ADULT_AGE);
+        
+        if (candidates.length > 0) {
+            // Берем самого старшего как главу рода
+            candidates.sort((a, b) => b.age - a.age);
+            const newPlayer = candidates[0];
+            
+            this.player = newPlayer;
+            this.generation++;
+            this.log(`👑 Новое поколение! Вы теперь управляете ${this.player.name}.`, 'good');
+            
+            // Спавн новых НПС для баланса
+            this.spawnNPCs(3, this.player.gender === 'male' ? 'female' : 'male');
+            
+            ui.updateAll();
+        } else {
+            this.log('💀 Род прервался! Игра окончена.', 'bad');
+            this.isRunning = false;
+            alert(`Род прервался на ${this.generation} поколении.`);
+            location.reload();
+        }
+    }
+
+    switchToNextChild() {
+        const children = this.characters.filter(c => c !== this.player && !c.isDead && c.age < CONFIG.ADULT_AGE);
+        if (children.length > 0) {
+            // Просто фокус на ребенке (визуально), управление не переключается навсегда, это просто просмотр
+            // Для полноценной смены нужно менять this.player, но по правилам игры мы ждем смерти
+            this.log('Просмотр потомства доступен только после смерти главы рода.', 'info');
+        } else {
+            this.log('Нет доступных детей для просмотра.', 'info');
+        }
+    }
+
+    toggleMouseControl() {
+        this.mouseControlEnabled = !this.mouseControlEnabled;
+        const btn = document.getElementById('btn-mouse-mode');
+        btn.textContent = this.mouseControlEnabled ? '🖱️ МЫШЬ' : '🖱️ АВТО';
+        btn.style.background = this.mouseControlEnabled ? '#48bb78' : '';
+        this.log(this.mouseControlEnabled ? 'Режим управления: Мышь' : 'Режим управления: Авто', 'info');
+    }
+
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        document.getElementById('pause-overlay').style.display = this.isPaused ? 'flex' : 'none';
+    }
+    
+    toggleSpeed() {
+        this.gameSpeed = this.gameSpeed === 1 ? 3 : 1;
+        document.getElementById('speed-display').textContent = this.gameSpeed + 'x';
+    }
+
+    restart() {
+        location.reload();
+    }
+
+    log(msg, type = '') {
+        const panel = document.getElementById('log-panel');
+        const div = document.createElement('div');
+        div.className = `log-entry log-${type}`;
+        div.textContent = `[Год ${this.year}] ${msg}`;
+        panel.prepend(div);
+    }
+
+    loop(timestamp) {
+        if (!this.isRunning) return;
+        
+        if (!this.isPaused) {
+            // Обновление года
+            if (timestamp - this.lastTime > 1000 / this.gameSpeed) {
+                this.year++;
+                document.getElementById('year-count').textContent = this.year;
+                this.lastTime = timestamp;
+            }
+
+            // Обновление персонажей
+            this.characters.forEach(char => char.update());
+            
+            // Обработка взаимодействия
+            if (this.target) {
+                this.processInteraction();
+            }
+            
+            // Очистка мертвых (опционально, можно оставлять как призраков)
+            // this.characters = this.characters.filter(c => !c.isDead); 
+        }
+        
+        requestAnimationFrame(this.loop);
+    }
+}
+
+/**
+ * UI МЕНЕДЖЕР
+ */
+const ui = {
+    updateAll() {
+        this.updateHeroStats();
+        document.getElementById('gen-count').textContent = game.generation;
+        document.getElementById('total-born').textContent = game.stats.born;
+        document.getElementById('total-couples').textContent = game.stats.couples;
+    },
+
+    updateHeroStats() {
+        if (!game.player) return;
+        const p = game.player;
+        document.getElementById('hero-name').textContent = p.name;
+        document.getElementById('hero-gender').textContent = p.gender === 'male' ? 'Мужской' : 'Женский';
+        document.getElementById('hero-age').textContent = p.age;
+        document.getElementById('hero-color').innerHTML = `${p.color.emoji} ${p.color.name}`;
+        document.getElementById('hero-interest').textContent = `${p.interest.emoji} ${p.interest.name}`;
+        
+        // Полоска жизни
+        const lifePercent = Math.max(0, 100 - ((p.age / CONFIG.MAX_AGE) * 100));
+        document.getElementById('hero-life-bar').style.width = `${lifePercent}%`;
+    },
+
+    updateTargetPanel(char) {
+        const panel = document.getElementById('target-panel');
+        panel.style.opacity = '1';
+        panel.style.pointerEvents = 'auto';
+        
+        document.getElementById('target-name').textContent = char.name;
+        document.getElementById('target-interest').textContent = `${char.interest.emoji} ${char.interest.name}`;
+        
+        const rel = game.player.getRelationWith(char.id);
+        this.updateRelBar(rel);
+        this.updateRelStatus("Начало общения...");
+    },
+
+    updateRelBar(percent) {
+        document.getElementById('rel-bar').style.width = `${percent}%`;
+        document.getElementById('rel-percent').textContent = `${Math.floor(percent)}%`;
+    },
+    
+    updateRelStatus(text) {
+        document.getElementById('rel-status').textContent = text;
+    },
+
+    clearTargetPanel() {
+        const panel = document.getElementById('target-panel');
+        panel.style.opacity = '0.5';
+        panel.style.pointerEvents = 'none';
+        document.getElementById('target-name').textContent = '-';
+        document.getElementById('rel-bar').style.width = '0%';
+        document.getElementById('rel-status').textContent = 'Ожидание...';
+    },
+
+    spawnFloatingEmoji(x, y, emoji) {
+        const el = document.createElement('div');
+        el.className = 'floating-emoji';
+        el.textContent = emoji;
+        el.style.left = `${x}px`;
+        el.style.top = `${y - 30}px`;
+        game.area.appendChild(el);
+        setTimeout(() => el.remove(), 1500);
+    },
+
+    spawnConfetti(x, y) {
+        for(let i=0; i<20; i++) {
+            setTimeout(() => {
+                const colors = ['#fc8181', '#63b3ed', '#68d391', '#f6e05e'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const el = document.createElement('div');
+                el.style.position = 'absolute';
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
+                el.style.width = '6px';
+                el.style.height = '6px';
+                el.style.background = color;
+                el.style.borderRadius = '50%';
+                el.style.pointerEvents = 'none';
+                el.style.transition = 'all 1s ease-out';
+                game.area.appendChild(el);
                 
-                // Обработчик движения мыши
-                document.addEventListener('mousemove', (e) => {
-                    this.mouseX = e.clientX;
-                    this.mouseY = e.clientY;
-                });
-            }
-
-            // Старт игры
-            start(gender) {
-                document.getElementById('start-screen').style.display = 'none';
-                
-                // Создание игрока
-                const randomColor = Object.keys(COLORS)[Math.floor(Math.random() * 3)];
-                const randomInterest = INTERESTS[Math.floor(Math.random() * 3)];
-                
-                this.player = new Character(
-                    gender,
-                    randomColor,
-                    randomInterest,
-                    window.innerWidth / 2 - 30,
-                    window.innerHeight / 2 - 30,
-                    true
-                );
-                this.player.createVisual(this.container);
-
-                // Генерация НПС
-                this.spawnNPCs(5);
-
-                this.isPlaying = true;
-                this.updateStats();
-                this.gameLoop();
-            }
-
-            // Генерация НПС
-            spawnNPCs(count) {
-                for (let i = 0; i < count; i++) {
-                    this.spawnNPC();
-                }
-            }
-
-            spawnNPC() {
-                const oppositeGender = this.player.gender === 'male' ? 'female' : 'male';
-                const randomColor = Object.keys(COLORS)[Math.floor(Math.random() * 3)];
-                const randomInterest = INTERESTS[Math.floor(Math.random() * 3)];
-                
-                const x = Math.random() * (window.innerWidth - 60);
-                const y = Math.random() * (window.innerHeight - 60);
-
-                const npc = new Character(oppositeGender, randomColor, randomInterest, x, y);
-                npc.createVisual(this.container);
-                this.npcs.push(npc);
-            }
-
-            // Игровой цикл
-            gameLoop() {
-                if (!this.isPlaying || this.isPaused) {
-                    requestAnimationFrame(() => this.gameLoop());
-                    return;
-                }
-
-                const containerWidth = window.innerWidth;
-                const containerHeight = window.innerHeight;
-
-                // Обновление игрока (мышь или авто)
-                if (this.player) {
-                    if (this.mouseControlEnabled) {
-                        // Режим мыши: плавное движение к курсору
-                        const dx = this.mouseX - (this.player.x + 30);
-                        const dy = this.mouseY - (this.player.y + 30);
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (distance > 5) {
-                            this.player.x += (dx / distance) * 5;
-                            this.player.y += (dy / distance) * 5;
-                            this.player.updatePosition();
-                        }
-                    } else {
-                        // Автономный режим
-                        this.player.update(containerWidth, containerHeight);
-                    }
-                }
-
-                // Обновление НПС
-                this.npcs.forEach(npc => npc.update(containerWidth, containerHeight));
-
-                requestAnimationFrame(() => this.gameLoop());
-            }
-
-            // Переключение управления мышью
-            toggleMouseControl() {
-                this.mouseControlEnabled = !this.mouseControlEnabled;
-                const btn = document.getElementById('mouse-btn');
-                
-                if (this.mouseControlEnabled) {
-                    btn.textContent = '🖱️ МЫШЬ';
-                    btn.style.background = 'linear-gradient(45deg, #00b894, #00cec9)';
-                } else {
-                    btn.textContent = '🤖 АВТО';
-                    btn.style.background = 'linear-gradient(45deg, #636e72, #b2bec3)';
-                }
-            }
-
-            // Переключение паузы
-            togglePause() {
-                this.isPaused = !this.isPaused;
-                const btn = document.getElementById('pause-btn');
-                const overlay = document.getElementById('pause-overlay');
-                
-                if (this.isPaused) {
-                    btn.textContent = '▶️ Продолжить';
-                    btn.style.background = 'linear-gradient(45deg, #00b894, #00cec9)';
-                    overlay.style.display = 'flex';
-                } else {
-                    btn.textContent = '⏸️ Пауза';
-                    btn.style.background = 'linear-gradient(45deg, #fdcb6e, #f39c12)';
-                    overlay.style.display = 'none';
-                }
-            }
-
-            // Выбор персонажа для взаимодействия
-            selectCharacter(npc) {
-                // Сброс предыдущего выбора
-                if (this.selectedNPC) {
-                    this.selectedNPC.element.classList.remove('interacting');
-                    clearInterval(this.interactionInterval);
-                }
-
-                this.selectedNPC = npc;
-                npc.element.classList.add('interacting');
-
-                // Показ информации
-                this.showCharacterInfo(npc);
-
-                // Автоматическое взаимодействие
-                this.startInteraction();
-            }
-
-            // Показ информации о персонаже
-            showCharacterInfo(npc) {
-                const infoPanel = document.getElementById('character-info');
-                infoPanel.style.display = 'block';
-                infoPanel.style.left = (npc.x + 80) + 'px';
-                infoPanel.style.top = npc.y + 'px';
-
-                document.getElementById('info-name').textContent = 
-                    npc.gender === 'male' ? 'Мальчик' : 'Девочка';
-                document.getElementById('info-color').textContent = COLORS[npc.color].name;
-                document.getElementById('info-interest').textContent = npc.interest;
-                document.getElementById('info-charge').textContent = npc.relationshipCharge + '%';
-
-                const btn = document.getElementById('interact-btn');
-                btn.disabled = npc.relationshipCharge >= 100;
-                btn.textContent = npc.relationshipCharge >= 100 ? '✅ Сближение!' : '💬 Общаться';
-            }
-
-            // Начало взаимодействия
-            startInteraction() {
-                if (this.interactionInterval) {
-                    clearInterval(this.interactionInterval);
-                }
-
-                this.interactionInterval = setInterval(() => {
-                    if (!this.selectedNPC || !this.isPlaying) {
-                        clearInterval(this.interactionInterval);
-                        return;
-                    }
-
-                    const npc = this.selectedNPC;
-                    
-                    // Проверка совместимости интересов
-                    let chargeIncrease = 0;
-                    if (this.player.interest === npc.interest) {
-                        chargeIncrease = 2; // Быстрый рост при совпадении
-                    } else {
-                        chargeIncrease = 0.5; // Медленный рост при различии
-                    }
-
-                    // Шанс снижения заряда при разных интересах
-                    if (this.player.interest !== npc.interest && Math.random() < 0.1) {
-                        chargeIncrease = -0.5;
-                    }
-
-                    npc.relationshipCharge = Math.min(100, Math.max(0, npc.relationshipCharge + chargeIncrease));
-                    npc.updateRelationshipBar();
-
-                    // Обновление инфо панели
-                    this.showCharacterInfo(npc);
-
-                    // Проверка на сближение
-                    if (npc.relationshipCharge >= 100) {
-                        this.completeRelationship(npc);
-                    }
-                }, 100);
-            }
-
-            // Завершение отношений (сближение)
-            completeRelationship(npc) {
-                clearInterval(this.interactionInterval);
-                this.selectedNPC.element.classList.remove('interacting');
-
-                // Создание ребенка
-                this.createChild(this.player, npc);
-
-                // Показ уведомления
-                this.showNotification('❤️ Сближение! Появился ребенок!');
-
-                // Сброс выбора
-                this.selectedNPC = null;
-                document.getElementById('character-info').style.display = 'none';
-
-                // Показ кнопки смены поколения
-                document.getElementById('generation-btn').style.display = 'block';
-
-                this.totalPairs++;
-                this.updateStats();
-            }
-
-            // Создание ребенка
-            createChild(parent1, parent2) {
-                // Определение пола ребенка
-                const childGender = Math.random() > 0.5 ? 'male' : 'female';
-                
-                // Наследование цвета (случайный выбор от одного из родителей)
-                const childColor = Math.random() > 0.5 ? parent1.color : parent2.color;
-                
-                // Наследование интереса (случайный выбор или новый)
-                let childInterest;
-                if (Math.random() > 0.7) {
-                    // 30% шанс нового интереса
-                    childInterest = INTERESTS[Math.floor(Math.random() * 3)];
-                } else {
-                    // 70% шанс наследования от родителя
-                    childInterest = Math.random() > 0.5 ? parent1.interest : parent2.interest;
-                }
-
-                const x = window.innerWidth / 2 - 30;
-                const y = window.innerHeight / 2 - 30;
-
-                const child = new Character(
-                    childGender,
-                    childColor,
-                    childInterest,
-                    x,
-                    y,
-                    false,
-                    { mother: parent1.gender === 'female' ? parent1 : parent2,
-                      father: parent1.gender === 'male' ? parent1 : parent2 }
-                );
-
-                child.createVisual(this.container);
-                this.children.push(child);
-                this.totalChildren++;
-                this.updateStats();
-            }
-
-            // Показ уведомления
-            showNotification(message) {
-                const notification = document.createElement('div');
-                notification.className = 'notification';
-                notification.textContent = message;
-                document.getElementById('game-container').appendChild(notification);
-
                 setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            }
+                    el.style.transform = `translate(${(Math.random()-0.5)*200}px, ${Math.random()*200}px)`;
+                    el.style.opacity = 0;
+                }, 10);
+                setTimeout(() => el.remove(), 1000);
+            }, i * 30);
+        }
+    },
 
-            // Переключение на ребенка (можно передать конкретного ребенка)
-            switchToChild(specificChild = null) {
-                if (this.children.length === 0 && !specificChild) return;
-
-                // Выбор ребенка: либо конкретный, либо случайный
-                const newPlayer = specificChild || this.children[Math.floor(Math.random() * this.children.length)];
-                
-                // Удаляем старого игрока
-                this.player.removeVisual();
-                
-                // Делаем ребенка игроком
-                newPlayer.isPlayer = true;
-                newPlayer.element.classList.add('player');
-                newPlayer.element.innerHTML = EMOJIS[newPlayer.gender];
-                
-                this.player = newPlayer;
-                this.generation = this.player.generation;
-
-                // Очистка детей и создание новых НПС
-                this.children.forEach(child => {
-                    if (child !== this.player) {
-                        child.removeVisual();
-                    }
-                });
-                this.children = [];
-
-                // Спавн новых НПС противоположного пола
-                this.npcs.forEach(npc => npc.removeVisual());
-                this.npcs = [];
-                this.spawnNPCs(5);
-
-                // Скрытие кнопки
-                document.getElementById('generation-btn').style.display = 'none';
-                document.getElementById('character-info').style.display = 'none';
-
-                if (this.selectedNPC) {
-                    this.selectedNPC.element.classList.remove('interacting');
-                    clearInterval(this.interactionInterval);
-                    this.selectedNPC = null;
-                }
-
-                this.updateStats();
-                this.showNotification(`🌟 Поколение ${this.generation}!`);
-            }
-
-            // Обновление статистики
-            updateStats() {
-                document.getElementById('stat-character').textContent = 
-                    this.player.gender === 'male' ? 'Мальчик' : 'Девочка';
-                document.getElementById('stat-generation').textContent = this.generation;
-                document.getElementById('stat-pairs').textContent = this.totalPairs;
-                document.getElementById('stat-children').textContent = this.totalChildren;
-                document.getElementById('stat-color').textContent = COLORS[this.player.color].name;
-                document.getElementById('stat-interest').textContent = this.player.interest;
-            }
-
-            // Обработка клика по кнопке взаимодействия
-            interact() {
-                if (this.selectedNPC && this.selectedNPC.relationshipCharge >= 100) {
-                    this.completeRelationship(this.selectedNPC);
-                }
-            }
-
-            // Перезапуск игры
-            restart() {
-                location.reload();
-            }
-
-            // Переключение на следующего ребенка
-            switchToNextChild() {
-                if (this.children.length === 0) return;
-                
-                // Находим текущего игрока в списке детей
-                const currentIndex = this.children.indexOf(this.player);
-                let nextIndex = (currentIndex + 1) % this.children.length;
-                
-                // Если следующий ребенок - это текущий игрок, берем следующего
-                while (nextIndex !== currentIndex && this.children[nextIndex] === this.player) {
-                    nextIndex = (nextIndex + 1) % this.children.length;
-                }
-                
-                if (this.children[nextIndex] !== this.player) {
-                    this.switchToChild(this.children[nextIndex]);
-                }
-            }
+    toggleEditor() {
+        const active = document.getElementById('editor-modal');
+        if (active) {
+            active.remove();
+            return;
         }
 
-        // Инициализация игры
-        const game = new Game();
+        const modal = document.createElement('div');
+        modal.id = 'editor-modal';
+        modal.style.position = 'fixed';
+        modal.style.top = '50%';
+        modal.style.left = '50%';
+        modal.style.transform = 'translate(-50%, -50%)';
+        modal.style.background = 'white';
+        modal.style.padding = '20px';
+        modal.style.borderRadius = '12px';
+        modal.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+        modal.style.zIndex = '200';
+        modal.innerHTML = `
+            <h3>🎨 Редактор Ассетов</h3>
+            <p>Загрузите свои картинки (PNG/JPG) для замены эмодзи.</p>
+            
+            <label>Мужской персонаж:</label><br>
+            <input type="file" class="editor-input" accept="image/*" onchange="ui.loadAsset('male', this)">
+            <div id="prev-male" class="asset-preview">👨</div>
+            
+            <label>Женский персонаж:</label><br>
+            <input type="file" class="editor-input" accept="image/*" onchange="ui.loadAsset('female', this)">
+            <div id="prev-female" class="asset-preview">👩</div>
+            
+            <label>Ребенок:</label><br>
+            <input type="file" class="editor-input" accept="image/*" onchange="ui.loadAsset('child', this)">
+            <div id="prev-child" class="asset-preview">👶</div>
+            
+            <div style="margin-top:15px; text-align:right;">
+                <button onclick="document.getElementById('editor-modal').remove()">Закрыть</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    },
 
-        // Обработка изменения размера окна
-        window.addEventListener('resize', () => {
-            if (game.player) {
-                game.player.x = Math.min(game.player.x, window.innerWidth - 60);
-                game.player.y = Math.min(game.player.y, window.innerHeight - 60);
+    loadAsset(type, input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                customAssets[type] = e.target.result;
+                CONFIG.USE_IMAGES = true;
+                document.getElementById(`prev-${type}`).innerHTML = `<img src="${e.target.result}">`;
+                game.log(`Ассет "${type}" обновлен!`, 'info');
             }
-        });
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+};
 
-        // Клик вне персонажа скрывает инфо панель
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.character') && !e.target.closest('#character-info')) {
-                if (game.selectedNPC) {
-                    game.selectedNPC.element.classList.remove('interacting');
-                    clearInterval(game.interactionInterval);
-                    game.selectedNPC = null;
-                }
-                document.getElementById('character-info').style.display = 'none';
-            }
-        });
-    </script>
+// Инициализация
+const game = new Game();
+
+</script>
 </body>
 </html>
