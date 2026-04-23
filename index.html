@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Симулятор Родословной</title>
+    <title>🌳 Симулятор Родословной</title>
     <style>
         /* ============================================
            CSS СТИЛИ
@@ -29,6 +29,202 @@
             height: 100%;
         }
 
+        /* Верхняя панель (Header) */
+        #header-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            color: white;
+        }
+
+        #header-panel h1 {
+            font-size: 1.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .header-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .restart-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .generation-counter {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        /* Боковая панель статистики */
+        #stats-panel {
+            position: absolute;
+            top: 60px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            min-width: 280px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        #stats-panel h3 {
+            margin-bottom: 10px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .stat-section {
+            margin-bottom: 15px;
+        }
+
+        .stat-section h4 {
+            color: #667eea;
+            font-size: 0.95em;
+            margin-bottom: 8px;
+        }
+
+        .stat-row {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-value {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        /* Шкала заряда в панели */
+        .charge-container {
+            margin-top: 10px;
+        }
+
+        .charge-label {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .charge-bar-bg {
+            width: 100%;
+            height: 15px;
+            background: #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .charge-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #48dbfb);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 8px;
+        }
+
+        /* Панель управления */
+        #controls-panel {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+        }
+
+        .mouse-btn {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .mouse-btn.active {
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            box-shadow: 0 0 10px rgba(56, 239, 125, 0.5);
+        }
+
+        .pause-btn {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .pause-btn.paused {
+            background: linear-gradient(45deg, #f5af19, #f12711);
+        }
+
+        .next-gen-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* Экран старта */
         #start-screen {
             position: absolute;
@@ -36,19 +232,25 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 2000;
         }
 
         #start-screen h1 {
             color: white;
             font-size: 3em;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #start-screen p {
+            color: #ddd;
+            font-size: 1.3em;
+            margin-bottom: 30px;
         }
 
         .gender-btn {
@@ -63,7 +265,7 @@
 
         .gender-btn:hover {
             transform: scale(1.1);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
         }
 
         .boy-btn {
@@ -76,37 +278,6 @@
             color: white;
         }
 
-        /* Панель статистики */
-        #stats-panel {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-            min-width: 250px;
-        }
-
-        #stats-panel h3 {
-            margin-bottom: 10px;
-            color: #333;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 5px;
-        }
-
-        .stat-row {
-            margin: 5px 0;
-            font-size: 14px;
-            color: #555;
-        }
-
-        .stat-label {
-            font-weight: bold;
-            color: #333;
-        }
-
         /* Персонаж */
         .character {
             position: absolute;
@@ -116,32 +287,52 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 30px;
+            font-size: 32px;
             cursor: pointer;
             transition: transform 0.1s;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             border: 3px solid white;
+            z-index: 50;
         }
 
         .character:hover {
-            transform: scale(1.1);
+            transform: scale(1.15);
+            z-index: 51;
         }
 
         .character.player {
             border: 4px solid gold;
-            box-shadow: 0 0 15px gold;
+            box-shadow: 0 0 20px gold, 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Индикатор над персонажем */
+        .character-indicator {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         /* Шкала заряда отношений */
         .relationship-bar {
             position: absolute;
-            bottom: -20px;
+            bottom: -18px;
             left: 50%;
             transform: translateX(-50%);
-            width: 80px;
-            height: 8px;
-            background: #ddd;
-            border-radius: 4px;
+            width: 70px;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
             overflow: hidden;
             display: none;
         }
@@ -150,7 +341,7 @@
             height: 100%;
             background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb);
             width: 0%;
-            transition: width 0.3s;
+            transition: width 0.2s;
         }
 
         .character.interacting .relationship-bar {
@@ -160,43 +351,55 @@
         /* Инфо о персонаже при клике */
         #character-info {
             position: absolute;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.98);
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
             z-index: 200;
             display: none;
-            min-width: 200px;
+            min-width: 220px;
+            border: 2px solid #667eea;
         }
 
         #character-info h4 {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             color: #333;
+            font-size: 1.1em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
         }
 
         #character-info p {
-            margin: 5px 0;
+            margin: 6px 0;
             font-size: 14px;
+            display: flex;
+            justify-content: space-between;
         }
 
         .action-btn {
-            margin-top: 10px;
-            padding: 8px 16px;
-            background: #667eea;
+            margin-top: 12px;
+            padding: 10px 18px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
             width: 100%;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.2s;
         }
 
         .action-btn:hover {
-            background: #5568d3;
+            transform: scale(1.02);
+            box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
         }
 
         .action-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         /* Уведомления */
@@ -205,43 +408,96 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.92);
             color: white;
-            padding: 30px 50px;
-            border-radius: 15px;
-            font-size: 1.5em;
-            z-index: 500;
+            padding: 35px 60px;
+            border-radius: 20px;
+            font-size: 1.6em;
+            z-index: 1500;
             display: none;
             text-align: center;
             animation: fadeInOut 3s forwards;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         }
 
         @keyframes fadeInOut {
-            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
             20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
             80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
         }
 
         /* Кнопка смены поколения */
         #generation-btn {
             position: absolute;
-            bottom: 20px;
+            bottom: 80px;
             right: 20px;
-            padding: 15px 30px;
+            padding: 18px 35px;
             background: linear-gradient(45deg, #11998e, #38ef7d);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 1.2em;
             cursor: pointer;
             z-index: 100;
             display: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+            font-weight: bold;
+            transition: all 0.3s;
         }
 
         #generation-btn:hover {
-            transform: scale(1.05);
+            transform: scale(1.08);
+            box-shadow: 0 8px 30px rgba(17, 153, 142, 0.6);
+        }
+
+        /* Эффекты анимации */
+        @keyframes heartFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+
+        .heart-effect {
+            position: absolute;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 1000;
+            animation: heartFloat 1.5s ease-out forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+            100% { opacity: 0; transform: translateY(200px) rotate(720deg); }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 1000;
+            animation: confettiFall 2s ease-out forwards;
+        }
+
+        /* Оверлей паузы */
+        #pause-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1800;
+        }
+
+        #pause-overlay span {
+            color: white;
+            font-size: 3em;
+            font-weight: bold;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
@@ -251,36 +507,86 @@
          ============================================ -->
     
     <div id="game-container">
+        <!-- Верхняя панель (Header) -->
+        <div id="header-panel">
+            <h1>🌳 Симулятор Родословной</h1>
+            <div class="header-controls">
+                <div class="generation-counter">Поколение: <span id="header-generation">1</span></div>
+                <button class="header-btn restart-btn" onclick="game.restart()">🔄 Начать заново</button>
+            </div>
+        </div>
+
         <!-- Экран выбора пола -->
         <div id="start-screen">
             <h1>🌳 Симулятор Родословной</h1>
-            <p style="color: white; margin-bottom: 20px; font-size: 1.2em;">Выберите пол вашего первого персонажа:</p>
+            <p>Выберите пол вашего первого персонажа:</p>
             <button class="gender-btn boy-btn" onclick="game.start('male')">👦 Мальчик</button>
             <button class="gender-btn girl-btn" onclick="game.start('female')">👧 Девочка</button>
         </div>
 
-        <!-- Панель статистики -->
+        <!-- Боковая панель статистики -->
         <div id="stats-panel">
             <h3>📊 Статистика</h3>
-            <div class="stat-row"><span class="stat-label">Персонаж:</span> <span id="stat-character">-</span></div>
-            <div class="stat-row"><span class="stat-label">Поколение:</span> <span id="stat-generation">1</span></div>
-            <div class="stat-row"><span class="stat-label">Всего пар:</span> <span id="stat-pairs">0</span></div>
-            <div class="stat-row"><span class="stat-label">Потомков:</span> <span id="stat-children">0</span></div>
-            <div class="stat-row"><span class="stat-label">Цвет:</span> <span id="stat-color">-</span></div>
-            <div class="stat-row"><span class="stat-label">Интерес:</span> <span id="stat-interest">-</span></div>
+            
+            <div class="stat-section">
+                <h4>👤 Текущий персонаж</h4>
+                <div class="stat-row"><span class="stat-label">Пол:</span> <span id="stat-character" class="stat-value">-</span></div>
+                <div class="stat-row"><span class="stat-label">Цвет:</span> <span id="stat-color" class="stat-value">-</span></div>
+                <div class="stat-row"><span class="stat-label">Интерес:</span> <span id="stat-interest" class="stat-value">-</span></div>
+                <div class="stat-row"><span class="stat-label">Поколение:</span> <span id="stat-generation" class="stat-value">1</span></div>
+            </div>
+
+            <div class="stat-section">
+                <h4>❤️ Отношения</h4>
+                <div class="stat-row"><span class="stat-label">Партнёр:</span> <span id="stat-partner" class="stat-value">-</span></div>
+                <div class="charge-container">
+                    <div class="charge-label">
+                        <span>Заряд отношений</span>
+                        <span id="stat-charge-percent">0%</span>
+                    </div>
+                    <div class="charge-bar-bg">
+                        <div class="charge-bar-fill" id="stat-charge-bar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-section">
+                <h4>👨‍👩‍👧‍👦 Семья</h4>
+                <div class="stat-row"><span class="stat-label">Всего пар:</span> <span id="stat-pairs" class="stat-value">0</span></div>
+                <div class="stat-row"><span class="stat-label">Потомков:</span> <span id="stat-children" class="stat-value">0</span></div>
+            </div>
         </div>
 
-        <!-- Инфо о персонаже -->
+        <!-- Панель управления -->
+        <div id="controls-panel">
+            <button class="control-btn mouse-btn" id="mouse-btn" onclick="game.toggleMouseControl()">
+                🖱️ <span id="mouse-text">АВТО</span>
+            </button>
+            <button class="control-btn pause-btn" id="pause-btn" onclick="game.togglePause()">
+                ⏸️ Пауза
+            </button>
+            <button class="control-btn next-gen-btn" id="next-child-btn" onclick="game.switchToNextChild()" disabled>
+                ➡️ След. ребёнок
+            </button>
+        </div>
+
+        <!-- Инфо о персонаже при клике -->
         <div id="character-info">
             <h4 id="info-name">Персонаж</h4>
             <p><span class="stat-label">Цвет:</span> <span id="info-color">-</span></p>
             <p><span class="stat-label">Интерес:</span> <span id="info-interest">-</span></p>
+            <p><span class="stat-label">Поколение:</span> <span id="info-generation">1</span></p>
             <p><span class="stat-label">Заряд:</span> <span id="info-charge">0%</span></p>
-            <button class="action-btn" id="interact-btn" onclick="game.interact()">💬 Общаться</button>
+            <button class="action-btn" id="interact-btn" onclick="game.interact()">💬 Начать общение</button>
         </div>
 
         <!-- Кнопка смены поколения -->
-        <button id="generation-btn" onclick="game.switchToChild()">👶 Продолжить за ребенка</button>
+        <button id="generation-btn" onclick="game.switchToChild()">👶 Продолжить за ребёнка</button>
+
+        <!-- Оверлей паузы -->
+        <div id="pause-overlay">
+            <span>⏸️ ПАУЗА</span>
+        </div>
 
         <!-- Контейнер для персонажей -->
         <div id="characters-container"></div>
